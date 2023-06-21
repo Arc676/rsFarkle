@@ -35,19 +35,19 @@ pub enum ToggleResult {
     NotUnpickable,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Die {
     value: i32,
     picked: bool,
     picked_this_roll: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Roll {
     dice: [Die; 6],
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Selection {
     values: [i32; 6],
     die_count: i32,
@@ -61,4 +61,98 @@ pub struct Player {
     hand: Hand,
     score: i32,
     name: String,
+}
+
+impl Die {
+    fn pick(&mut self) {
+        self.picked = true;
+        self.picked_this_roll = true;
+    }
+
+    fn unpick(&mut self) {
+        self.picked = false;
+        self.picked_this_roll = false;
+    }
+}
+
+impl Roll {
+    fn is_exhausted(&self) -> bool {
+        for die in &self.dice {
+            if !die.picked {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn count_values(&self) -> [usize; 6] {
+        let mut res = [0; 6];
+        for die in &self.dice {
+            if !die.picked || die.picked_this_roll {
+                res[die.value as usize] += 1;
+            }
+        }
+        res
+    }
+
+    fn determine_pickable(&self, occurrences: Option<&[usize; 6]>) -> [bool; 6] {
+        let mut res = [false; 6];
+        let counts = match occurrences {
+            Some(c) => *c,
+            None => self.count_values(),
+        };
+        for i in 0..6 {
+            let required = if i == 0 || i == 4 { 3 } else { 1 };
+            let count = counts[(self.dice[i].value - 1) as usize];
+            res[i] = !self.dice[i].picked && count >= required;
+        }
+        res
+    }
+
+    fn pick_die(&mut self, die: usize) -> bool {
+        let allowed = self.determine_pickable(None);
+        if allowed[die] {
+            self.dice[die].pick();
+            return true;
+        }
+        false
+    }
+
+    fn unpick_die(&mut self, die: usize) -> bool {
+        let die = &mut self.dice[die];
+        if die.picked_this_roll {
+            die.unpick();
+            return true;
+        }
+        false
+    }
+
+    pub fn new_roll(&mut self) {
+        if self.is_exhausted() {
+            *self = Roll::default();
+        }
+        for die in &mut self.dice {
+            if die.picked {
+                die.picked_this_roll = false;
+            } else {
+                // rand
+            }
+        }
+    }
+
+    pub fn toggle_die(&mut self, die: usize) -> ToggleResult {
+        if self.dice[die].picked {
+            if self.unpick_die(die) {
+                ToggleResult::Unpicked
+            } else {
+                ToggleResult::NotUnpickable
+            }
+        } else {
+            if self.pick_die(die) {
+                ToggleResult::Picked
+            } else {
+                ToggleResult::NotPickable
+            }
+        }
+    }
 }
