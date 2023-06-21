@@ -1,0 +1,23 @@
+[package]
+name = "farkle"
+authors = ["Arc676/Alessandro Vinciguerra <alesvinciguerra@gmail.com>"]
+license = "GPL-3.0-only"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.20.1" # Gives us egui, epi and web+native backends
+serde = { version = "1", features = ["derive"], optional = true }
+
+[lib]
+name = "farkle-rs"
+path = "backend/lib.rs"
+crate-type = ["lib"]
+
+[[bin]]
+name = "farkle"
+path = "farkle/main.rs"
+
+[features]
+persistence = ["eframe/persistence", "serde"]
+default = ["persistence"]
