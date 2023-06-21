@@ -16,6 +16,14 @@ use rand::Rng;
 const STRAIGHT_VALUE: i32 = 3000;
 const TRIPLE_PAIR_VALUE: i32 = 2000;
 
+const ONE_VALUE: i32 = 100;
+const ONE_SET_VALUE: i32 = 1000;
+
+const FIVE_VALUE: i32 = 50;
+const FIVE_SET_VALUE: i32 = 500;
+
+const SET_SCALE_VALUE: i32 = 100;
+
 #[derive(Debug)]
 pub enum GameState {
     FirstRoll,
@@ -54,7 +62,7 @@ pub struct Roll {
 
 #[derive(Debug, Default)]
 pub struct Selection {
-    values: [i32; 6],
+    values: Vec<i32>,
     die_count: i32,
     value: i32,
 }
@@ -201,6 +209,45 @@ impl Roll {
             }
         }
         RollType::Farkle
+    }
+
+    pub fn construct_selection(&self) -> Result<Selection, &str> {
+        let mut chosen = [0i32; 6];
+        let mut sel = Selection::default();
+
+        for die in &self.dice {
+            if die.picked_this_roll {
+                sel.values.push(die.value);
+                chosen[die.value as usize] += 1;
+            }
+        }
+        for i in 1..6 {
+            if i == 4 {
+                continue;
+            }
+            if chosen[i] >= 3 {
+                sel.value += (i as i32 + 1) * SET_SCALE_VALUE * (chosen[i] - 2);
+            } else {
+                return Err("Can only select 3 or more dice that aren't 1 or 5");
+            }
+        }
+
+        if chosen[0] >= 3 {
+            sel.value += ONE_SET_VALUE * (chosen[0] - 2);
+        } else {
+            sel.value += ONE_VALUE * chosen[0];
+        }
+        if chosen[4] >= 3 {
+            sel.value += FIVE_SET_VALUE * (chosen[4] - 2);
+        } else {
+            sel.value += FIVE_VALUE * chosen[4];
+        }
+
+        if sel.value > 0 {
+            Ok(sel)
+        } else {
+            Err("Selection must have positive value")
+        }
     }
 }
 
