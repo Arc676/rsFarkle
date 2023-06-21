@@ -11,6 +11,8 @@
 
 // You should have received a copy of the GNU General Public License
 
+use rand::Rng;
+
 #[derive(Debug)]
 pub enum GameState {
     FirstRoll,
@@ -135,7 +137,7 @@ impl Roll {
             if die.picked {
                 die.picked_this_roll = false;
             } else {
-                // rand
+                die.value = rand::thread_rng().gen_range(1..=6);
             }
         }
     }
