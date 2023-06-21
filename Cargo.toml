@@ -10,7 +10,7 @@ eframe = "0.20.1" # Gives us egui, epi and web+native backends
 serde = { version = "1", features = ["derive"], optional = true }
 
 [lib]
-name = "farkle-rs"
+name = "rsfarkle"
 path = "backend/lib.rs"
 crate-type = ["lib"]
 
