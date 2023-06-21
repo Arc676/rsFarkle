@@ -203,3 +203,32 @@ impl Roll {
         RollType::Farkle
     }
 }
+
+impl Player {
+    pub fn new(name: String) -> Self {
+        Player {
+            hand: Hand::default(),
+            score: 0,
+            name
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn score(&self) -> i32 {
+        self.score
+    }
+
+    pub fn empty_hand(&mut self) {
+        self.hand.clear();
+    }
+
+    pub fn bank(&mut self) -> i32 {
+        let total = self.hand.iter().fold(0, |mut acc, sel| { acc += sel.value; acc });
+        self.score += total;
+        self.empty_hand();
+        total
+    }
+}
