@@ -13,6 +13,9 @@
 
 use rand::Rng;
 
+const STRAIGHT_VALUE: i32 = 3000;
+const TRIPLE_PAIR_VALUE: i32 = 2000;
+
 #[derive(Debug)]
 pub enum GameState {
     FirstRoll,
@@ -156,5 +159,47 @@ impl Roll {
                 ToggleResult::NotPickable
             }
         }
+    }
+
+    pub fn determine_type(&mut self, selection: &mut Selection) -> RollType {
+        let counts = self.count_values();
+
+        let mut is_straight = true;
+        let mut is_triple_pair = true;
+
+        for c in counts {
+            if c != 1 {
+                is_straight = false;
+            }
+            if c != 2 {
+                is_triple_pair = false;
+            }
+            if !is_straight && !is_triple_pair {
+                break;
+            }
+        }
+
+        if is_straight || is_triple_pair {
+            for i in 0..6 {
+                selection.values[i] = self.dice[i].value;
+                self.dice[i].pick();
+            }
+            selection.die_count = 6;
+            if is_straight {
+                selection.value = STRAIGHT_VALUE;
+                return RollType::Straight;
+            } else {
+                selection.value = TRIPLE_PAIR_VALUE;
+                return RollType::TriplePair;
+            }
+        }
+
+        let pickable = self.determine_pickable(Some(&counts));
+        for allowed in pickable {
+            if allowed {
+                return RollType::Simple;
+            }
+        }
+        RollType::Farkle
     }
 }
