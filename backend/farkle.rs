@@ -86,6 +86,14 @@ impl Die {
         self.picked = false;
         self.picked_this_roll = false;
     }
+
+    pub fn picked(&self) -> bool {
+        self.picked
+    }
+
+    pub fn value(&self) -> i32 {
+        self.value
+    }
 }
 
 impl Roll {
@@ -248,6 +256,10 @@ impl Roll {
         } else {
             Err("Selection must have positive value")
         }
+    }
+
+    pub fn dice(&self) -> &[Die] {
+        &self.dice
     }
 }
 

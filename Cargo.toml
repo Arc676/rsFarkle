@@ -17,7 +17,7 @@ crate-type = ["lib"]
 
 [[bin]]
 name = "farkle"
-path = "farkle/main.rs"
+path = "src/main.rs"
 
 [features]
 persistence = ["eframe/persistence", "serde"]
