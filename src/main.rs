@@ -43,6 +43,19 @@ enum MoveType {
     Unpick,
 }
 
+fn print_help() {
+    println!(concat!(
+        "help - show this help text\n",
+        "roll - roll die pool\n",
+        "view - view the current roll\n",
+        "pick - pick dice from the die pool\n",
+        "unpick - reset the die selection\n",
+        "hand - show your current hand\n",
+        "bank - bank all points currently in hand\n",
+        "exit - immediately exit the game"
+    ))
+}
+
 fn view_roll(roll: &Roll) {
     println!("Your roll:");
     for i in 1..=6 {
@@ -75,8 +88,9 @@ fn get_move() -> Option<MoveType> {
 }
 
 fn play_game(players: &mut PlayerList, turns: u32) {
-    for turn in 1..=turns {
-        for player in players.iter() {
+    let mut roll = Roll::default();
+    'game_loop: for turn in 1..=turns {
+        for (player_no, player) in players.iter_mut().enumerate() {
             println!(
                 "{}'s turn {} of {}. Current score: {}.",
                 player.name(),
@@ -84,8 +98,40 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                 turns,
                 player.score()
             );
+
+            roll.new_roll();
+            let mut state = GameState::FirstRoll;
+
+            while state != GameState::TurnEnded {
+                print!("{}> ", player_no);
+                let cmd = get_move();
+                if cmd.is_none() {
+                    println!("Invalid command. Type 'help' to see a list of commands.");
+                    continue;
+                }
+                let cmd = cmd.unwrap();
+                match cmd {
+                    MoveType::Roll => todo!(),
+                    MoveType::Bank => {
+                        if state == GameState::Rolling {
+                            let points = player.bank();
+                            println!("Banked {} points.", points);
+                            state = GameState::TurnEnded;
+                        } else {
+                            println!("You must pick from the die pool before banking.");
+                        }
+                    }
+                    MoveType::Exit => break 'game_loop,
+                    MoveType::View => view_roll(&roll),
+                    MoveType::Pick => todo!(),
+                    MoveType::Help => print_help(),
+                    MoveType::Hand => todo!(),
+                    MoveType::Unpick => todo!(),
+                }
+            }
         }
     }
+    println!("Game over");
 }
 
 fn save_scores(players: &mut PlayerList) -> io::Result<()> {
