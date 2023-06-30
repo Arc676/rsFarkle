@@ -13,6 +13,17 @@
 
 use rsfarkle::farkle::*;
 
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "rsfarkle", about = "Command line Farkle game")]
+struct Options {
+    #[structopt(short = "p", long = "players", help = "Player count")]
+    player_count: usize,
+    #[structopt(short = "t", long = "turns", help = "Turn count")]
+    turn_count: u32,
+}
+
 type PlayerList = Vec<Player>;
 
 fn view_roll(roll: &Roll) {
@@ -43,8 +54,7 @@ fn save_scores(players: &mut PlayerList) {
 }
 
 fn main() {
-    let player_count = 1;
-    let turn_count = 10u32;
+    let Options { player_count, turn_count } = Options::from_args();
 
     let mut players = PlayerList::with_capacity(player_count);
 
