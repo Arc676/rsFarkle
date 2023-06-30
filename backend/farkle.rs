@@ -268,7 +268,7 @@ impl Player {
         Player {
             hand: Hand::default(),
             score: 0,
-            name
+            name,
         }
     }
 
@@ -285,7 +285,10 @@ impl Player {
     }
 
     pub fn bank(&mut self) -> i32 {
-        let total = self.hand.iter().fold(0, |mut acc, sel| { acc += sel.value; acc });
+        let total = self.hand.iter().fold(0, |mut acc, sel| {
+            acc += sel.value;
+            acc
+        });
         self.score += total;
         self.empty_hand();
         total

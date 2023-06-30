@@ -44,7 +44,13 @@ fn view_roll(roll: &Roll) {
 fn play_game(players: &mut PlayerList, turns: u32) {
     for turn in 1..=turns {
         for player in players.iter() {
-            println!("{}'s turn {} of {}. Current score: {}.", player.name(), turn, turns, player.score());
+            println!(
+                "{}'s turn {} of {}. Current score: {}.",
+                player.name(),
+                turn,
+                turns,
+                player.score()
+            );
         }
     }
 }
@@ -54,7 +60,10 @@ fn save_scores(players: &mut PlayerList) {
 }
 
 fn main() {
-    let Options { player_count, turn_count } = Options::from_args();
+    let Options {
+        player_count,
+        turn_count,
+    } = Options::from_args();
 
     let mut players = PlayerList::with_capacity(player_count);
 
