@@ -32,6 +32,17 @@ struct Options {
 
 type PlayerList = Vec<Player>;
 
+enum MoveType {
+    Roll,
+    Bank,
+    Exit,
+    View,
+    Pick,
+    Help,
+    Hand,
+    Unpick,
+}
+
 fn view_roll(roll: &Roll) {
     println!("Your roll:");
     for i in 1..=6 {
@@ -44,6 +55,22 @@ fn view_roll(roll: &Roll) {
         } else {
             print!("{} ", die.value());
         }
+    }
+}
+
+fn get_move() -> Option<MoveType> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("Failed to read");
+    match input.trim() {
+        "help" => Some(MoveType::Help),
+        "roll" => Some(MoveType::Roll),
+        "bank" => Some(MoveType::Bank),
+        "exit" => Some(MoveType::Exit),
+        "view" => Some(MoveType::View),
+        "pick" => Some(MoveType::Pick),
+        "hand" => Some(MoveType::Hand),
+        "unpick" => Some(MoveType::Unpick),
+        _ => None,
     }
 }
 
