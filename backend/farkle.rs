@@ -24,7 +24,7 @@ const FIVE_SET_VALUE: i32 = 500;
 
 const SET_SCALE_VALUE: i32 = 100;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum GameState {
     FirstRoll,
     Rolling,
@@ -32,7 +32,7 @@ pub enum GameState {
     TurnEnded,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RollType {
     Farkle,
     Simple,
@@ -40,7 +40,7 @@ pub enum RollType {
     Straight,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ToggleResult {
     Picked,
     Unpicked,
