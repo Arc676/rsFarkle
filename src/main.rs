@@ -59,7 +59,7 @@ fn save_scores(players: &mut PlayerList) {
     //
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let Options {
         player_count,
         turn_count,
@@ -67,11 +67,17 @@ fn main() {
 
     let mut players = PlayerList::with_capacity(player_count);
 
-    for _ in 0..player_count {
-        players.push(Player::new("".to_string()));
+    for i in 0..player_count {
+        print!("Enter name for player {}: ", i + 1);
+        io::stdout().flush()?;
+        let mut name = String::new();
+        io::stdin().read_line(&mut name)?;
+        players.push(Player::new(name.trim().to_string()));
     }
 
     play_game(&mut players, turn_count);
 
     save_scores(&mut players);
+
+    Ok(())
 }
