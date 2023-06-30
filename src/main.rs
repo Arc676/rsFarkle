@@ -11,6 +11,12 @@
 
 // You should have received a copy of the GNU General Public License
 
+use chrono::Local;
+use std::{
+    fs::File,
+    io::{self, Write},
+};
+
 use rsfarkle::farkle::*;
 
 use structopt::StructOpt;
@@ -55,8 +61,30 @@ fn play_game(players: &mut PlayerList, turns: u32) {
     }
 }
 
-fn save_scores(players: &mut PlayerList) {
-    //
+fn save_scores(players: &mut PlayerList) -> io::Result<()> {
+    print!("Enter filename for scores: ");
+    io::stdout().flush()?;
+    let mut filename = String::new();
+    io::stdin().read_line(&mut filename)?;
+    filename = filename.trim().to_string();
+
+    players.sort();
+    let now = Local::now();
+
+    if filename.is_empty() {
+        println!("{}", now.format("%F %T"));
+        for player in players {
+            println!("{} - {}", player.name(), player.score());
+        }
+    } else {
+        let mut file = File::create(&filename)?;
+        write!(file, "{}", now.format("%F %T"))?;
+        for player in players {
+            write!(file, "{} - {}", player.name(), player.score())?;
+        }
+    }
+
+    Ok(())
 }
 
 fn main() -> io::Result<()> {
@@ -77,7 +105,7 @@ fn main() -> io::Result<()> {
 
     play_game(&mut players, turn_count);
 
-    save_scores(&mut players);
+    save_scores(&mut players)?;
 
     Ok(())
 }
