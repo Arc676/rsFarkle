@@ -127,7 +127,7 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                                 state = GameState::TurnEnded;
                             }
                             RollType::Straight | RollType::TriplePair => {
-                                println!("Selected {} points' worth of dice.", selection.value());
+                                println!("{}!\nSelected {} points' worth of dice.", roll_type, selection.value());
                                 player.add_selection(selection);
                             }
                             _ => state = GameState::Picking,

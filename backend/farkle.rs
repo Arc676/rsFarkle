@@ -11,6 +11,8 @@
 
 // You should have received a copy of the GNU General Public License
 
+use std::fmt::Display;
+
 use rand::Rng;
 
 const STRAIGHT_VALUE: i32 = 3000;
@@ -74,6 +76,17 @@ pub struct Player {
     hand: Hand,
     score: i32,
     name: String,
+}
+
+impl Display for RollType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RollType::Farkle => write!(f, "Farkle"),
+            RollType::Simple => write!(f, "Simple roll"),
+            RollType::TriplePair => write!(f, "Triple pair"),
+            RollType::Straight => write!(f, "Straight"),
+        }
+    }
 }
 
 impl Die {
