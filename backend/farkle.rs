@@ -177,7 +177,8 @@ impl Roll {
         }
     }
 
-    pub fn determine_type(&mut self, selection: &mut Selection) -> RollType {
+    pub fn determine_type(&mut self) -> (Selection, RollType) {
+        let mut selection = Selection::default();
         let counts = self.count_values();
 
         let mut is_straight = true;
@@ -203,20 +204,20 @@ impl Roll {
             selection.die_count = 6;
             if is_straight {
                 selection.value = STRAIGHT_VALUE;
-                return RollType::Straight;
+                return (selection, RollType::Straight);
             } else {
                 selection.value = TRIPLE_PAIR_VALUE;
-                return RollType::TriplePair;
+                return (selection, RollType::TriplePair);
             }
         }
 
         let pickable = self.determine_pickable(Some(&counts));
         for allowed in pickable {
             if allowed {
-                return RollType::Simple;
+                return (selection, RollType::Simple);
             }
         }
-        RollType::Farkle
+        (selection, RollType::Farkle)
     }
 
     pub fn construct_selection(&self) -> Result<Selection, &str> {
@@ -296,6 +297,10 @@ impl Player {
 
     pub fn selections(&self) -> std::slice::Iter<'_, Selection> {
         self.hand.iter()
+    }
+
+    pub fn add_selection(&mut self, selection: Selection) {
+        self.hand.push(selection);
     }
 
     pub fn bank(&mut self) -> i32 {

@@ -111,7 +111,28 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                 }
                 let cmd = cmd.unwrap();
                 match cmd {
-                    MoveType::Roll => todo!(),
+                    MoveType::Roll => {
+                        if state == GameState::Picking {
+                            println!("You have already rolled. Use 'pick' to pick from the die pool.");
+                            continue;
+                        }
+                        roll.new_roll();
+                        view_roll(&roll);
+
+                        let (selection, roll_type) = roll.determine_type();
+                        match roll_type {
+                            RollType::Farkle => {
+                                println!("Farkle!");
+                                player.empty_hand();
+                                state = GameState::TurnEnded;
+                            }
+                            RollType::Straight | RollType::TriplePair => {
+                                println!("Selected {} points' worth of dice.", selection.value());
+                                player.add_selection(selection);
+                            }
+                            _ => state = GameState::Picking,
+                        }
+                    }
                     MoveType::Bank => {
                         if state == GameState::Rolling {
                             let points = player.bank();
