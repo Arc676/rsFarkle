@@ -125,7 +125,18 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                     MoveType::View => view_roll(&roll),
                     MoveType::Pick => todo!(),
                     MoveType::Help => print_help(),
-                    MoveType::Hand => todo!(),
+                    MoveType::Hand => {
+                        let mut total = 0;
+                        println!("Your selections:");
+                        for sel in player.selections() {
+                            for value in sel.values() {
+                                print!("{} ", value);
+                            }
+                            println!();
+                            total += sel.value();
+                        }
+                        println!("{} points in hand.", total);
+                    }
                     MoveType::Unpick => todo!(),
                 }
             }

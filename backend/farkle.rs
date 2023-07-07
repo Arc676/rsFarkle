@@ -263,6 +263,16 @@ impl Roll {
     }
 }
 
+impl Selection {
+    pub fn values(&self) -> std::slice::Iter<'_, i32> {
+        self.values.iter()
+    }
+
+    pub fn value(&self) -> i32 {
+        self.value
+    }
+}
+
 impl Player {
     pub fn new(name: String) -> Self {
         Player {
@@ -282,6 +292,10 @@ impl Player {
 
     pub fn empty_hand(&mut self) {
         self.hand.clear();
+    }
+
+    pub fn selections(&self) -> std::slice::Iter<'_, Selection> {
+        self.hand.iter()
     }
 
     pub fn bank(&mut self) -> i32 {
