@@ -113,7 +113,9 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                 match cmd {
                     MoveType::Roll => {
                         if state == GameState::Picking {
-                            println!("You have already rolled. Use 'pick' to pick from the die pool.");
+                            println!(
+                                "You have already rolled. Use 'pick' to pick from the die pool."
+                            );
                             continue;
                         }
                         roll.new_roll();
@@ -127,7 +129,11 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                                 state = GameState::TurnEnded;
                             }
                             RollType::Straight | RollType::TriplePair => {
-                                println!("{}!\nSelected {} points' worth of dice.", roll_type, selection.value());
+                                println!(
+                                    "{}!\nSelected {} points' worth of dice.",
+                                    roll_type,
+                                    selection.value()
+                                );
                                 player.add_selection(selection);
                             }
                             _ => state = GameState::Picking,
