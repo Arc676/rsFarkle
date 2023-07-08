@@ -164,7 +164,17 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                         }
                         println!("{} points in hand.", total);
                     }
-                    MoveType::Unpick => todo!(),
+                    MoveType::Unpick => {
+                        if state != GameState::Rolling {
+                            println!("Cannot unpick dice at this time.");
+                            continue;
+                        }
+                        roll.deselect();
+                        let _ = player.undo_selection();
+                        state = GameState::Picking;
+                        println!("Reset die selection.");
+                        view_roll(&roll);
+                    }
                 }
             }
         }

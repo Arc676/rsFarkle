@@ -161,6 +161,12 @@ impl Roll {
         false
     }
 
+    pub fn deselect(&mut self) {
+        for die in &mut self.dice {
+            die.unpick();
+        }
+    }
+
     pub fn new_roll(&mut self) {
         if self.is_exhausted() {
             *self = Roll::default();
@@ -314,6 +320,10 @@ impl Player {
 
     pub fn add_selection(&mut self, selection: Selection) {
         self.hand.push(selection);
+    }
+
+    pub fn undo_selection(&mut self) -> Option<Selection> {
+        self.hand.pop()
     }
 
     pub fn bank(&mut self) -> i32 {
