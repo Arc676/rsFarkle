@@ -71,7 +71,9 @@ fn view_roll(roll: &Roll) {
     }
 }
 
-fn get_move() -> Option<MoveType> {
+fn get_move(player_no: usize) -> Option<MoveType> {
+    print!("{}> ", player_no);
+    io::stdout().flush().expect("Failed to flush");
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("Failed to read");
     match input.trim() {
@@ -84,6 +86,23 @@ fn get_move() -> Option<MoveType> {
         "hand" => Some(MoveType::Hand),
         "unpick" => Some(MoveType::Unpick),
         _ => None,
+    }
+}
+
+fn get_pick() -> Option<usize> {
+    print!("Picking> ");
+    io::stdout().flush().expect("Failed to flush");
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("Failed to read");
+    match input.trim().parse() {
+        Ok(val) => {
+            if 0 < val && val <= 6 {
+                Some(val)
+            } else {
+                None
+            }
+        }
+        Err(_) => None,
     }
 }
 
@@ -103,8 +122,7 @@ fn play_game(players: &mut PlayerList, turns: u32) {
             let mut state = GameState::FirstRoll;
 
             while state != GameState::TurnEnded {
-                print!("{}> ", player_no);
-                let cmd = get_move();
+                let cmd = get_move(player_no);
                 if cmd.is_none() {
                     println!("Invalid command. Type 'help' to see a list of commands.");
                     continue;
@@ -150,7 +168,31 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                     }
                     MoveType::Exit => break 'game_loop,
                     MoveType::View => view_roll(&roll),
-                    MoveType::Pick => todo!(),
+                    MoveType::Pick => {
+                        match state {
+                            GameState::Rolling => println!("You have already picked dice. Use 'unpick' to reset your selection."),
+                            GameState::FirstRoll => println!("You have not rolled yet. Use 'roll' to roll."),
+                            _ => {
+                                println!("Enter a die index to toggle selecting. Any invalid input to stop picking.");
+                                while let Some(idx) = get_pick() {
+                                    match roll.toggle_die(idx - 1) {
+                                        ToggleResult::Picked => println!("Picked die {}.", idx),
+                                        ToggleResult::Unpicked => println!("Unpicked die {}.", idx),
+                                        ToggleResult::NotPickable => println!("You cannot pick this die."),
+                                        ToggleResult::NotUnpickable => println!("You cannot unpick this die."),
+                                    }
+                                }
+                                match roll.construct_selection() {
+                                    Ok(selection) => {
+                                        println!("Selected {} points' worth of dice.", selection.value());
+                                        state = GameState::Rolling;
+                                        player.add_selection(selection);
+                                    }
+                                    Err(e) => println!("The selection is invalid: {}", e)
+                                }
+                            }
+                        }
+                    }
                     MoveType::Help => print_help(),
                     MoveType::Hand => {
                         let mut total = 0;
