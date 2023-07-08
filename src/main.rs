@@ -16,10 +16,13 @@ use std::{
     fs::File,
     io::{self, Write},
 };
+#[cfg(feature = "onekey")]
+use std::io::Read;
 
 use rsfarkle::farkle::*;
 
 use structopt::StructOpt;
+use termios::{Termios, TCSANOW, ICANON, tcsetattr};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rsfarkle", about = "Command line Farkle game")]
@@ -72,6 +75,7 @@ fn view_roll(roll: &Roll) {
     println!();
 }
 
+#[cfg(not(feature = "onekey"))]
 fn get_move(player_no: usize) -> Option<MoveType> {
     print!("{}> ", player_no);
     io::stdout().flush().expect("Failed to flush");
@@ -90,6 +94,27 @@ fn get_move(player_no: usize) -> Option<MoveType> {
     }
 }
 
+#[cfg(feature = "onekey")]
+fn get_move(player_no: usize) -> Option<MoveType> {
+    print!("{}> ", player_no);
+    io::stdout().flush().expect("Failed to flush");
+    let mut buffer = [0;1];
+    io::stdin().read_exact(&mut buffer).unwrap();
+    println!();
+    match buffer[0] as char {
+        '?' => Some(MoveType::Help),
+        'r' => Some(MoveType::Roll),
+        'b' => Some(MoveType::Bank),
+        'e' => Some(MoveType::Exit),
+        'v' => Some(MoveType::View),
+        'p' => Some(MoveType::Pick),
+        'h' => Some(MoveType::Hand),
+        'u' => Some(MoveType::Unpick),
+        _ => None
+    }
+}
+
+#[cfg(not(feature = "onekey"))]
 fn get_pick() -> Option<usize> {
     print!("Picking> ");
     io::stdout().flush().expect("Failed to flush");
@@ -104,6 +129,24 @@ fn get_pick() -> Option<usize> {
             }
         }
         Err(_) => None,
+    }
+}
+
+#[cfg(feature = "onekey")]
+fn get_pick() -> Option<usize> {
+    print!("Picking> ");
+    io::stdout().flush().expect("Failed to flush");
+    let mut buffer = [0;1];
+    io::stdin().read_exact(&mut buffer).unwrap();
+    println!();
+    match buffer[0] as char {
+        'q' => Some(1),
+        'w' => Some(2),
+        'e' => Some(3),
+        'r' => Some(4),
+        't' => Some(5),
+        'y' => Some(6),
+        _ => None
     }
 }
 
@@ -278,7 +321,20 @@ fn main() -> io::Result<()> {
         players.push(Player::new(name.trim().to_string()));
     }
 
+    let stdin = 0;
+    let old = Termios::from_fd(stdin).unwrap();
+    let mut new = old.clone();
+
+    if cfg!(feature = "onekey") {
+        new.c_lflag &= !ICANON;
+        tcsetattr(stdin, TCSANOW, &new).unwrap();
+    }
+
     play_game(&mut players, turn_count);
+
+    if cfg!(feature = "onekey") {
+        tcsetattr(stdin, TCSANOW, &old).unwrap();
+    }
 
     save_scores(&mut players)?;
 

@@ -11,6 +11,7 @@ chrono = "0.4.26"
 eframe = "0.20.1" # Gives us egui, epi and web+native backends
 serde = { version = "1", features = ["derive"], optional = true }
 rand = "0.8.5"
+termios = "0.3.3"
 
 [lib]
 name = "rsfarkle"
@@ -22,5 +23,6 @@ name = "farkle"
 path = "src/main.rs"
 
 [features]
+onekey = []
 persistence = ["eframe/persistence", "serde"]
 default = ["persistence"]
