@@ -69,6 +69,7 @@ fn view_roll(roll: &Roll) {
             print!("{} ", die.value());
         }
     }
+    println!();
 }
 
 fn get_move(player_no: usize) -> Option<MoveType> {
@@ -107,7 +108,6 @@ fn get_pick() -> Option<usize> {
 }
 
 fn play_game(players: &mut PlayerList, turns: u32) {
-    let mut roll = Roll::default();
     'game_loop: for turn in 1..=turns {
         for (player_no, player) in players.iter_mut().enumerate() {
             println!(
@@ -118,7 +118,7 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                 player.score()
             );
 
-            roll.new_roll();
+            let mut roll = Roll::default();
             let mut state = GameState::FirstRoll;
 
             while state != GameState::TurnEnded {
@@ -168,31 +168,43 @@ fn play_game(players: &mut PlayerList, turns: u32) {
                     }
                     MoveType::Exit => break 'game_loop,
                     MoveType::View => view_roll(&roll),
-                    MoveType::Pick => {
-                        match state {
-                            GameState::Rolling => println!("You have already picked dice. Use 'unpick' to reset your selection."),
-                            GameState::FirstRoll => println!("You have not rolled yet. Use 'roll' to roll."),
-                            _ => {
-                                println!("Enter a die index to toggle selecting. Any invalid input to stop picking.");
-                                while let Some(idx) = get_pick() {
-                                    match roll.toggle_die(idx - 1) {
-                                        ToggleResult::Picked => println!("Picked die {}.", idx),
-                                        ToggleResult::Unpicked => println!("Unpicked die {}.", idx),
-                                        ToggleResult::NotPickable => println!("You cannot pick this die."),
-                                        ToggleResult::NotUnpickable => println!("You cannot unpick this die."),
+                    MoveType::Pick => match state {
+                        GameState::Rolling => println!(
+                            "You have already picked dice. Use 'unpick' to reset your selection."
+                        ),
+                        GameState::FirstRoll => {
+                            println!("You have not rolled yet. Use 'roll' to roll.")
+                        }
+                        _ => {
+                            println!("Enter a die index to toggle selecting. Any invalid input to stop picking.");
+                            while let Some(idx) = get_pick() {
+                                match roll.toggle_die(idx - 1) {
+                                    ToggleResult::Picked => println!("Picked die {}.", idx),
+                                    ToggleResult::Unpicked => println!("Unpicked die {}.", idx),
+                                    ToggleResult::NotPickable => {
+                                        println!("You cannot pick this die.")
+                                    }
+                                    ToggleResult::NotUnpickable => {
+                                        println!("You cannot unpick this die.")
                                     }
                                 }
-                                match roll.construct_selection() {
-                                    Ok(selection) => {
-                                        println!("Selected {} points' worth of dice.", selection.value());
-                                        state = GameState::Rolling;
-                                        player.add_selection(selection);
-                                    }
-                                    Err(e) => println!("The selection is invalid: {}", e)
+                            }
+                            match roll.construct_selection() {
+                                Ok(selection) => {
+                                    println!(
+                                        "Selected {} points' worth of dice.",
+                                        selection.value()
+                                    );
+                                    state = GameState::Rolling;
+                                    player.add_selection(selection);
+                                }
+                                Err(e) => {
+                                    println!("The selection is invalid: {}", e);
+                                    roll.deselect();
                                 }
                             }
                         }
-                    }
+                    },
                     MoveType::Help => print_help(),
                     MoveType::Hand => {
                         let mut total = 0;
@@ -241,9 +253,9 @@ fn save_scores(players: &mut PlayerList) -> io::Result<()> {
         }
     } else {
         let mut file = File::create(&filename)?;
-        write!(file, "{}", now.format("%F %T"))?;
+        writeln!(file, "{}", now.format("%F %T"))?;
         for player in players {
-            write!(file, "{} - {}", player.name(), player.score())?;
+            writeln!(file, "{} - {}", player.name(), player.score())?;
         }
     }
 

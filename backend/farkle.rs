@@ -65,7 +65,6 @@ pub struct Roll {
 #[derive(Debug, Default)]
 pub struct Selection {
     values: Vec<i32>,
-    die_count: i32,
     value: i32,
 }
 
@@ -123,7 +122,7 @@ impl Roll {
         let mut res = [0; 6];
         for die in &self.dice {
             if !die.picked || die.picked_this_roll {
-                res[die.value as usize] += 1;
+                res[die.value as usize - 1] += 1;
             }
         }
         res
@@ -135,10 +134,14 @@ impl Roll {
             Some(c) => *c,
             None => self.count_values(),
         };
-        for i in 0..6 {
-            let required = if i == 0 || i == 4 { 3 } else { 1 };
-            let count = counts[(self.dice[i].value - 1) as usize];
-            res[i] = !self.dice[i].picked && count >= required;
+        for (i, die) in self.dice.iter().enumerate() {
+            let required = if die.value == 1 || die.value == 5 {
+                1
+            } else {
+                3
+            };
+            let count = counts[die.value as usize - 1];
+            res[i] = !die.picked && count >= required;
         }
         res
     }
@@ -162,8 +165,8 @@ impl Roll {
     }
 
     pub fn deselect(&mut self) {
-        for die in &mut self.dice {
-            die.unpick();
+        for i in 0..6 {
+            self.unpick_die(i);
         }
     }
 
@@ -216,11 +219,10 @@ impl Roll {
         }
 
         if is_straight || is_triple_pair {
-            for i in 0..6 {
-                selection.values[i] = self.dice[i].value;
-                self.dice[i].pick();
+            for die in &mut self.dice {
+                selection.values.push(die.value);
+                die.pick();
             }
-            selection.die_count = 6;
             if is_straight {
                 selection.value = STRAIGHT_VALUE;
                 return (selection, RollType::Straight);
@@ -246,7 +248,7 @@ impl Roll {
         for die in &self.dice {
             if die.picked_this_roll {
                 sel.values.push(die.value);
-                chosen[die.value as usize] += 1;
+                chosen[die.value as usize - 1] += 1;
             }
         }
         for i in 1..6 {
@@ -255,7 +257,7 @@ impl Roll {
             }
             if chosen[i] >= 3 {
                 sel.value += (i as i32 + 1) * SET_SCALE_VALUE * (chosen[i] - 2);
-            } else {
+            } else if chosen[i] > 0 {
                 return Err("Can only select 3 or more dice that aren't 1 or 5");
             }
         }
