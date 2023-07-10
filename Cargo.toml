@@ -4,6 +4,7 @@ authors = ["Arc676/Alessandro Vinciguerra <alesvinciguerra@gmail.com>"]
 license = "GPL-3.0-only"
 version = "0.1.0"
 edition = "2021"
+default-run = "farkle-ui"
 
 [dependencies]
 structopt = "0.3.21"

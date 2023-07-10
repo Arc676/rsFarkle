@@ -20,7 +20,6 @@ use eframe::{egui, Frame};
 use rsfarkle::farkle::*;
 
 #[forbid(unsafe_code)]
-
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 struct Farkle {
     #[serde(skip)]
@@ -42,10 +41,24 @@ impl Farkle {
         }
         Default::default()
     }
+
+    fn settings(&mut self, ui: &mut Ui) -> bool {
+        ui.button("Quit").clicked()
+    }
+
+    fn game_view(&mut self, ui: &mut Ui) {
+        //
+    }
 }
 
 impl eframe::App for Farkle {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        egui::SidePanel::left("control_panel").show(ctx, |ui| {
+            if self.settings(ui) {
+                frame.close();
+            }
+        });
+        egui::CentralPanel::default().show(ctx, |ui| self.game_view(ui));
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
