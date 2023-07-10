@@ -119,11 +119,11 @@ impl eframe::App for Farkle {
     }
 }
 
-fn main() {
+fn main() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
         "Farkle",
         native_options,
         Box::new(|cc| Box::new(Farkle::new(cc))),
-    );
+    )
 }
