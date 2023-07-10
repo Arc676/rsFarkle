@@ -13,17 +13,17 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use chrono::Local;
+#[cfg(feature = "onekey")]
+use std::io::Read;
 use std::{
     fs::File,
     io::{self, Write},
 };
-#[cfg(feature = "onekey")]
-use std::io::Read;
 
 use rsfarkle::farkle::*;
 
 use structopt::StructOpt;
-use termios::{Termios, TCSANOW, ICANON, tcsetattr};
+use termios::{tcsetattr, Termios, ICANON, TCSANOW};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rsfarkle", about = "Command line Farkle game")]
@@ -36,15 +36,11 @@ struct Options {
 
 type PlayerList = Vec<Player>;
 
-enum MoveType {
-    Roll,
-    Bank,
+#[derive(Debug, PartialEq)]
+enum SelectedMove {
+    Move(MoveType),
     Exit,
-    View,
-    Pick,
-    Help,
-    Hand,
-    Unpick,
+    NoMove,
 }
 
 fn print_help() {
@@ -77,41 +73,41 @@ fn view_roll(roll: &Roll) {
 }
 
 #[cfg(not(feature = "onekey"))]
-fn get_move(player_no: usize) -> Option<MoveType> {
+fn get_move(player_no: usize) -> SelectedMove {
     print!("{}> ", player_no);
     io::stdout().flush().expect("Failed to flush");
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("Failed to read");
     match input.trim() {
-        "help" => Some(MoveType::Help),
-        "roll" => Some(MoveType::Roll),
-        "bank" => Some(MoveType::Bank),
-        "exit" => Some(MoveType::Exit),
-        "view" => Some(MoveType::View),
-        "pick" => Some(MoveType::Pick),
-        "hand" => Some(MoveType::Hand),
-        "unpick" => Some(MoveType::Unpick),
-        _ => None,
+        "help" => SelectedMove::Move(MoveType::Help),
+        "roll" => SelectedMove::Move(MoveType::Roll),
+        "bank" => SelectedMove::Move(MoveType::Bank),
+        "exit" => SelectedMove::Exit,
+        "view" => SelectedMove::Move(MoveType::View),
+        "pick" => SelectedMove::Move(MoveType::Pick),
+        "hand" => SelectedMove::Move(MoveType::Hand),
+        "unpick" => SelectedMove::Move(MoveType::Unpick),
+        _ => SelectedMove::NoMove,
     }
 }
 
 #[cfg(feature = "onekey")]
-fn get_move(player_no: usize) -> Option<MoveType> {
+fn get_move(player_no: usize) -> SelectedMove {
     print!("{}> ", player_no);
     io::stdout().flush().expect("Failed to flush");
-    let mut buffer = [0;1];
+    let mut buffer = [0; 1];
     io::stdin().read_exact(&mut buffer).unwrap();
     println!();
     match buffer[0] as char {
-        '?' => Some(MoveType::Help),
-        'r' => Some(MoveType::Roll),
-        'b' => Some(MoveType::Bank),
-        'e' => Some(MoveType::Exit),
-        'v' => Some(MoveType::View),
-        'p' => Some(MoveType::Pick),
-        'h' => Some(MoveType::Hand),
-        'u' => Some(MoveType::Unpick),
-        _ => None
+        '?' => SelectedMove::Move(MoveType::Help),
+        'r' => SelectedMove::Move(MoveType::Roll),
+        'b' => SelectedMove::Move(MoveType::Bank),
+        'e' => SelectedMove::Exit,
+        'v' => SelectedMove::Move(MoveType::View),
+        'p' => SelectedMove::Move(MoveType::Pick),
+        'h' => SelectedMove::Move(MoveType::Hand),
+        'u' => SelectedMove::Move(MoveType::Unpick),
+        _ => SelectedMove::NoMove,
     }
 }
 
@@ -137,7 +133,7 @@ fn get_pick() -> Option<usize> {
 fn get_pick() -> Option<usize> {
     print!("Picking> ");
     io::stdout().flush().expect("Failed to flush");
-    let mut buffer = [0;1];
+    let mut buffer = [0; 1];
     io::stdin().read_exact(&mut buffer).unwrap();
     println!();
     match buffer[0] as char {
@@ -147,7 +143,7 @@ fn get_pick() -> Option<usize> {
         'r' => Some(4),
         't' => Some(5),
         'y' => Some(6),
-        _ => None
+        _ => None,
     }
 }
 
@@ -166,112 +162,112 @@ fn play_game(players: &mut PlayerList, turns: u32) {
             let mut state = GameState::FirstRoll;
 
             while state != GameState::TurnEnded {
-                let cmd = get_move(player_no);
-                if cmd.is_none() {
-                    println!("Invalid command. Type 'help' to see a list of commands.");
-                    continue;
-                }
-                let cmd = cmd.unwrap();
-                match cmd {
-                    MoveType::Roll => {
-                        if state == GameState::Picking {
-                            println!(
+                match get_move(player_no) {
+                    SelectedMove::Move(mov) => match mov {
+                        MoveType::Roll => {
+                            if state == GameState::Picking {
+                                println!(
                                 "You have already rolled. Use 'pick' to pick from the die pool."
                             );
-                            continue;
-                        }
-                        roll.new_roll();
-                        view_roll(&roll);
+                                continue;
+                            }
+                            roll.new_roll();
+                            view_roll(&roll);
 
-                        let (selection, roll_type) = roll.determine_type();
-                        match roll_type {
-                            RollType::Farkle => {
-                                println!("Farkle!");
-                                player.empty_hand();
-                                state = GameState::TurnEnded;
-                            }
-                            RollType::Straight | RollType::TriplePair => {
-                                println!(
-                                    "{}!\nSelected {} points' worth of dice.",
-                                    roll_type,
-                                    selection.value()
-                                );
-                                player.add_selection(selection);
-                            }
-                            _ => state = GameState::Picking,
-                        }
-                    }
-                    MoveType::Bank => {
-                        if state == GameState::Rolling {
-                            let points = player.bank();
-                            println!("Banked {} points.", points);
-                            state = GameState::TurnEnded;
-                        } else {
-                            println!("You must pick from the die pool before banking.");
-                        }
-                    }
-                    MoveType::Exit => break 'game_loop,
-                    MoveType::View => view_roll(&roll),
-                    MoveType::Pick => match state {
-                        GameState::Rolling => println!(
-                            "You have already picked dice. Use 'unpick' to reset your selection."
-                        ),
-                        GameState::FirstRoll => {
-                            println!("You have not rolled yet. Use 'roll' to roll.")
-                        }
-                        _ => {
-                            println!("Enter a die index to toggle selecting. Any invalid input to stop picking.");
-                            while let Some(idx) = get_pick() {
-                                match roll.toggle_die(idx - 1) {
-                                    ToggleResult::Picked => println!("Picked die {}.", idx),
-                                    ToggleResult::Unpicked => println!("Unpicked die {}.", idx),
-                                    ToggleResult::NotPickable => {
-                                        println!("You cannot pick this die.")
-                                    }
-                                    ToggleResult::NotUnpickable => {
-                                        println!("You cannot unpick this die.")
-                                    }
+                            let (selection, roll_type) = roll.determine_type();
+                            match roll_type {
+                                RollType::Farkle => {
+                                    println!("Farkle!");
+                                    player.empty_hand();
+                                    state = GameState::TurnEnded;
                                 }
-                            }
-                            match roll.construct_selection() {
-                                Ok(selection) => {
+                                RollType::Straight | RollType::TriplePair => {
                                     println!(
-                                        "Selected {} points' worth of dice.",
+                                        "{}!\nSelected {} points' worth of dice.",
+                                        roll_type,
                                         selection.value()
                                     );
-                                    state = GameState::Rolling;
                                     player.add_selection(selection);
                                 }
-                                Err(e) => {
-                                    println!("The selection is invalid: {}", e);
-                                    roll.deselect();
+                                _ => state = GameState::Picking,
+                            }
+                        }
+                        MoveType::Bank => {
+                            if state == GameState::Rolling {
+                                let points = player.bank();
+                                println!("Banked {} points.", points);
+                                state = GameState::TurnEnded;
+                            } else {
+                                println!("You must pick from the die pool before banking.");
+                            }
+                        }
+                        MoveType::Exit => break 'game_loop,
+                        MoveType::View => view_roll(&roll),
+                        MoveType::Pick => match state {
+                            GameState::Rolling => println!(
+                            "You have already picked dice. Use 'unpick' to reset your selection."
+                        ),
+                            GameState::FirstRoll => {
+                                println!("You have not rolled yet. Use 'roll' to roll.")
+                            }
+                            _ => {
+                                println!("Enter a die index to toggle selecting. Any invalid input to stop picking.");
+                                while let Some(idx) = get_pick() {
+                                    match roll.toggle_die(idx - 1) {
+                                        ToggleResult::Picked => println!("Picked die {}.", idx),
+                                        ToggleResult::Unpicked => println!("Unpicked die {}.", idx),
+                                        ToggleResult::NotPickable => {
+                                            println!("You cannot pick this die.")
+                                        }
+                                        ToggleResult::NotUnpickable => {
+                                            println!("You cannot unpick this die.")
+                                        }
+                                    }
+                                }
+                                match roll.construct_selection() {
+                                    Ok(selection) => {
+                                        println!(
+                                            "Selected {} points' worth of dice.",
+                                            selection.value()
+                                        );
+                                        state = GameState::Rolling;
+                                        player.add_selection(selection);
+                                    }
+                                    Err(e) => {
+                                        println!("The selection is invalid: {}", e);
+                                        roll.deselect();
+                                    }
                                 }
                             }
+                        },
+                        MoveType::Help => print_help(),
+                        MoveType::Hand => {
+                            let mut total = 0;
+                            println!("Your selections:");
+                            for sel in player.selections() {
+                                for value in sel.values() {
+                                    print!("{} ", value);
+                                }
+                                println!();
+                                total += sel.value();
+                            }
+                            println!("{} points in hand.", total);
+                        }
+                        MoveType::Unpick => {
+                            if state != GameState::Rolling {
+                                println!("Cannot unpick dice at this time.");
+                                continue;
+                            }
+                            roll.deselect();
+                            let _ = player.undo_selection();
+                            state = GameState::Picking;
+                            println!("Reset die selection.");
+                            view_roll(&roll);
                         }
                     },
-                    MoveType::Help => print_help(),
-                    MoveType::Hand => {
-                        let mut total = 0;
-                        println!("Your selections:");
-                        for sel in player.selections() {
-                            for value in sel.values() {
-                                print!("{} ", value);
-                            }
-                            println!();
-                            total += sel.value();
-                        }
-                        println!("{} points in hand.", total);
-                    }
-                    MoveType::Unpick => {
-                        if state != GameState::Rolling {
-                            println!("Cannot unpick dice at this time.");
-                            continue;
-                        }
-                        roll.deselect();
-                        let _ = player.undo_selection();
-                        state = GameState::Picking;
-                        println!("Reset die selection.");
-                        view_roll(&roll);
+                    SelectedMove::Exit => break 'game_loop,
+                    SelectedMove::NoMove => {
+                        println!("Invalid command. Type 'help' to see a list of commands.")
                     }
                 }
             }

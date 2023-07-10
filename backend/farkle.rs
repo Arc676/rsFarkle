@@ -69,6 +69,18 @@ pub struct Selection {
     value: i32,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum MoveType {
+    Roll,
+    Bank,
+    Exit,
+    View,
+    Pick,
+    Help,
+    Hand,
+    Unpick,
+}
+
 type Hand = Vec<Selection>;
 
 #[derive(Debug)]
