@@ -22,6 +22,10 @@ crate-type = ["lib"]
 name = "farkle"
 path = "src/main.rs"
 
+[[bin]]
+name = "farkle-ui"
+path = "ui/main.rs"
+
 [features]
 onekey = []
 persistence = ["eframe/persistence", "serde"]
