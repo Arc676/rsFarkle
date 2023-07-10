@@ -20,6 +20,12 @@ use eframe::{egui, Frame};
 use rsfarkle::farkle::*;
 
 #[forbid(unsafe_code)]
+#[derive(Debug, PartialEq)]
+enum AppAction {
+    StartGame,
+    ExitApp,
+}
+
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 struct Farkle {
     #[serde(skip)]
@@ -28,6 +34,8 @@ struct Farkle {
     current_turn: usize,
     #[serde(skip)]
     current_player: usize,
+    #[serde(skip)]
+    game_in_progress: bool,
 
     player_names: Vec<String>,
     player_count: usize,
@@ -42,23 +50,68 @@ impl Farkle {
         Default::default()
     }
 
-    fn settings(&mut self, ui: &mut Ui) -> bool {
-        ui.button("Quit").clicked()
+    fn settings(&mut self, ui: &mut Ui) -> Option<AppAction> {
+        ui.label("Number of turns");
+        ui.add(egui::Slider::new(&mut self.turn_count, 1..=20usize));
+
+        ui.label("Number of players");
+        ui.add(egui::Slider::new(&mut self.player_count, 0..=10usize));
+        if self.player_count > self.player_names.len() {
+            self.player_names
+                .resize_with(self.player_count, || String::new());
+        }
+        for name in self.player_names.iter_mut().take(self.player_count) {
+            ui.text_edit_singleline(name);
+        }
+        if ui.button("New Game").clicked() {
+            return Some(AppAction::StartGame);
+        }
+        if ui.button("Quit").clicked() {
+            return Some(AppAction::ExitApp);
+        }
+        None
     }
 
+    fn splash(&self, ui: &mut Ui) {}
+
     fn game_view(&mut self, ui: &mut Ui) {
-        //
+        ui.label(format!(
+            "{}'s turn {} of {}",
+            self.players[self.current_player].name(),
+            self.current_turn,
+            self.turn_count
+        ));
     }
 }
 
 impl eframe::App for Farkle {
     fn update(&mut self, ctx: &Context, frame: &mut Frame) {
         egui::SidePanel::left("control_panel").show(ctx, |ui| {
-            if self.settings(ui) {
-                frame.close();
+            if let Some(action) = self.settings(ui) {
+                match action {
+                    AppAction::StartGame => {
+                        self.players = self
+                            .player_names
+                            .iter()
+                            .take(self.player_count)
+                            .map(|name| Player::new(name.clone()))
+                            .collect();
+
+                        self.current_turn = 1;
+                        self.current_player = 0;
+                        self.game_in_progress = true;
+                    }
+                    AppAction::ExitApp => frame.close(),
+                }
             }
         });
-        egui::CentralPanel::default().show(ctx, |ui| self.game_view(ui));
+        egui::CentralPanel::default().show(ctx, |ui| {
+            if self.game_in_progress {
+                self.game_view(ui)
+            } else {
+                self.splash(ui);
+            }
+        });
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
