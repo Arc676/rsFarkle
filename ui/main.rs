@@ -50,6 +50,10 @@ impl Farkle {
         Default::default()
     }
 
+    fn get_input(name: &str, key: egui::Key, ctx: &Context, ui: &mut Ui) -> bool {
+        ui.button(name).clicked() || ctx.input(|i| i.key_released(key))
+    }
+
     fn settings(&mut self, ui: &mut Ui) -> Option<AppAction> {
         ui.label("Number of turns");
         ui.add(egui::Slider::new(&mut self.turn_count, 1..=20usize));
@@ -74,13 +78,34 @@ impl Farkle {
 
     fn splash(&self, ui: &mut Ui) {}
 
-    fn game_view(&mut self, ui: &mut Ui) {
+    fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
         ui.label(format!(
             "{}'s turn {} of {}",
             self.players[self.current_player].name(),
             self.current_turn,
             self.turn_count
         ));
+
+        let mut mov = None;
+
+        type Mapping = (&'static str, egui::Key, MoveType);
+        const MOVES: [Mapping; 2] = [
+            ("Roll", egui::Key::R, MoveType::Roll),
+            ("Bank", egui::Key::B, MoveType::Bank),
+        ];
+
+        ui.horizontal(|ui| {
+            for (name, key, mt) in MOVES {
+                if Self::get_input(name, key, ctx, ui) {
+                    mov = Some(mt);
+                }
+            }
+        });
+
+        let Some(mov) = mov else { return };
+        match mov {
+            _ => todo!(),
+        }
     }
 }
 
@@ -107,7 +132,7 @@ impl eframe::App for Farkle {
         });
         egui::CentralPanel::default().show(ctx, |ui| {
             if self.game_in_progress {
-                self.game_view(ui)
+                self.game_view(ctx, ui)
             } else {
                 self.splash(ui);
             }
