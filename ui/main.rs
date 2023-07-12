@@ -31,6 +31,11 @@ struct Farkle {
     #[serde(skip)]
     players: Vec<Player>,
     #[serde(skip)]
+    roll: Roll,
+    #[serde(skip)]
+    state: GameState,
+
+    #[serde(skip)]
     current_turn: usize,
     #[serde(skip)]
     current_player: usize,
@@ -52,6 +57,8 @@ impl Default for Farkle {
             player_names: vec![],
             player_count: 1,
             turn_count: 5,
+            roll: Roll::default(),
+            state: GameState::default(),
         }
     }
 }

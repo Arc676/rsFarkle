@@ -27,8 +27,9 @@ const FIVE_SET_VALUE: i32 = 500;
 
 const SET_SCALE_VALUE: i32 = 100;
 
-#[derive(Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq)]
 pub enum GameState {
+    #[default]
     FirstRoll,
     Rolling,
     Picking,
