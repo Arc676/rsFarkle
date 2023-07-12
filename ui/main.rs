@@ -132,8 +132,15 @@ impl eframe::App for Farkle {
                         self.players = self
                             .player_names
                             .iter()
+                            .enumerate()
                             .take(self.player_count)
-                            .map(|name| Player::new(name.clone()))
+                            .map(|(i, name)| {
+                                if name.is_empty() {
+                                    Player::new(format!("Player {}", i + 1))
+                                } else {
+                                    Player::new(name.clone())
+                                }
+                            })
                             .collect();
 
                         self.current_turn = 1;
