@@ -26,7 +26,7 @@ enum AppAction {
     ExitApp,
 }
 
-#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Farkle {
     #[serde(skip)]
     players: Vec<Player>,
@@ -40,6 +40,20 @@ struct Farkle {
     player_names: Vec<String>,
     player_count: usize,
     turn_count: usize,
+}
+
+impl Default for Farkle {
+    fn default() -> Self {
+        Farkle {
+            players: vec![],
+            current_turn: 0,
+            current_player: 0,
+            game_in_progress: false,
+            player_names: vec![],
+            player_count: 1,
+            turn_count: 5,
+        }
+    }
 }
 
 impl Farkle {
