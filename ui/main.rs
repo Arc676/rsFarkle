@@ -34,6 +34,8 @@ struct Farkle {
     roll: Roll,
     #[serde(skip)]
     state: GameState,
+    #[serde(skip)]
+    roll_state: Option<RollType>,
 
     #[serde(skip)]
     current_turn: usize,
@@ -59,6 +61,7 @@ impl Default for Farkle {
             turn_count: 5,
             roll: Roll::default(),
             state: GameState::default(),
+            roll_state: None,
         }
     }
 }
@@ -69,6 +72,14 @@ impl Farkle {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
         Default::default()
+    }
+
+    fn get_current_player_mut(&mut self) -> &mut Player {
+        &mut self.players[self.current_player]
+    }
+
+    fn get_current_player(&self) -> &Player {
+        &self.players[self.current_player]
     }
 
     fn get_input(name: &str, key: egui::Key, ctx: &Context, ui: &mut Ui) -> bool {
@@ -97,21 +108,35 @@ impl Farkle {
         None
     }
 
-    fn splash(&self, ui: &mut Ui) {}
+    fn splash(&self, ui: &mut Ui) {
+        ui.heading("Farkle");
+        ui.label("Set up game parameters and click 'New Game' to play.");
+    }
 
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
         ui.label(format!(
-            "{}'s turn {} of {}",
-            self.players[self.current_player].name(),
+            "{}'s turn {} of {}. Score: {}",
+            self.get_current_player().name(),
             self.current_turn,
-            self.turn_count
+            self.turn_count,
+            self.get_current_player().score()
         ));
+
+        if let Some(roll) = self.roll_state {
+            match roll {
+                RollType::Farkle => ui.label("Farkle!"),
+                RollType::TriplePair => ui.label("Triple pair!"),
+                RollType::Straight => ui.label("Straight!"),
+                _ => ui.label("")
+            };
+        }
 
         let mut mov = None;
 
         type Mapping = (&'static str, egui::Key, MoveType);
-        const MOVES: [Mapping; 2] = [
+        const MOVES: [Mapping; 3] = [
             ("Roll", egui::Key::R, MoveType::Roll),
+            ("Confirm Selection", egui::Key::C, MoveType::Pick),
             ("Bank", egui::Key::B, MoveType::Bank),
         ];
 
@@ -125,6 +150,26 @@ impl Farkle {
 
         let Some(mov) = mov else { return };
         match mov {
+            MoveType::Roll => {
+                self.roll.new_roll();
+                let (selection, roll_type) = self.roll.determine_type();
+                match roll_type {
+                    RollType::Farkle => {
+                        self.get_current_player_mut().empty_hand();
+                        self.state = GameState::TurnEnded;
+                        self.roll_state = Some(roll_type);
+                    }
+                    RollType::Straight | RollType::TriplePair => {
+                        self.get_current_player_mut().add_selection(selection);
+                        self.roll_state = Some(roll_type);
+                    }
+                    _ => self.state = GameState::Picking,
+                }
+            }
+            MoveType::Bank => {
+                self.get_current_player_mut().bank();
+                self.state = GameState::TurnEnded;
+            }
             _ => todo!(),
         }
     }

@@ -36,7 +36,7 @@ pub enum GameState {
     TurnEnded,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum RollType {
     Farkle,
     Simple,
