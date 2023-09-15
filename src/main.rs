@@ -276,7 +276,11 @@ fn play_game(players: &mut PlayerList, turns: u32) {
     println!("Game over");
 }
 
-fn save_scores(players: &mut PlayerList) -> io::Result<()> {
+fn save_scores(
+    players: &mut PlayerList,
+    start: chrono::DateTime<Local>,
+    turns: u32,
+) -> io::Result<()> {
     print!("Enter filename for scores: ");
     io::stdout().flush()?;
     let mut filename = String::new();
@@ -284,19 +288,33 @@ fn save_scores(players: &mut PlayerList) -> io::Result<()> {
     filename = filename.trim().to_string();
 
     players.sort();
-    let now = Local::now();
+
+    fn dump(
+        out: &mut impl Write,
+        start: &chrono::DateTime<Local>,
+        players: &mut PlayerList,
+        turns: u32,
+    ) -> io::Result<()> {
+        let now = Local::now();
+        writeln!(
+            out,
+            "{}-{} ({} turns)",
+            start.format("%F: %T"),
+            now.format("%T"),
+            turns
+        )?;
+        for player in players {
+            writeln!(out, "{} - {}", player.name(), player.score())?;
+        }
+
+        Ok(())
+    }
 
     if filename.is_empty() {
-        println!("{}", now.format("%F %T"));
-        for player in players {
-            println!("{} - {}", player.name(), player.score());
-        }
+        dump(&mut io::stdout(), &start, players, turns)?;
     } else {
         let mut file = File::create(&filename)?;
-        writeln!(file, "{}", now.format("%F %T"))?;
-        for player in players {
-            writeln!(file, "{} - {}", player.name(), player.score())?;
-        }
+        dump(&mut file, &start, players, turns)?;
     }
 
     Ok(())
@@ -327,13 +345,15 @@ fn main() -> io::Result<()> {
         tcsetattr(stdin, TCSANOW, &new).unwrap();
     }
 
+    let start = Local::now();
+
     play_game(&mut players, turn_count);
 
     if cfg!(feature = "onekey") {
         tcsetattr(stdin, TCSANOW, &old).unwrap();
     }
 
-    save_scores(&mut players)?;
+    save_scores(&mut players, start, turn_count)?;
 
     Ok(())
 }
