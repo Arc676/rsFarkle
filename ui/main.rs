@@ -91,7 +91,7 @@ impl Farkle {
         ui.add(egui::Slider::new(&mut self.turn_count, 1..=20usize));
 
         ui.label("Number of players");
-        ui.add(egui::Slider::new(&mut self.player_count, 0..=10usize));
+        ui.add(egui::Slider::new(&mut self.player_count, 1..=10usize));
         if self.player_count > self.player_names.len() {
             self.player_names
                 .resize_with(self.player_count, || String::new());
