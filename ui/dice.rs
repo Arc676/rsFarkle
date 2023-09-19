@@ -14,7 +14,7 @@
 
 use eframe::egui::{Ui, Vec2};
 use eframe::epaint::{ColorImage, TextureHandle};
-use rsfarkle::farkle::DieValue;
+use rsfarkle::farkle::Die;
 
 #[derive(Default)]
 pub struct DieRenderer {
@@ -60,10 +60,21 @@ impl DieRenderer {
         self.dice[0].is_none()
     }
 
-    pub fn draw_die(&self, value: DieValue, ui: &mut Ui) {
-        assert!(value > 0 && value <= 6);
-        if let Some((texture, size)) = &self.dice[(value - 1) as usize] {
-            ui.image(texture, *size);
+    pub fn draw_die(&self, die: &Die, pickable: bool, ui: &mut Ui) {
+        let idx = die.value() - 1;
+        if let Some((texture, size)) = &self.dice[idx] {
+            ui.vertical(|ui| {
+                ui.image(texture, *size);
+                if die.picked() {
+                    if die.picked_this_roll() {
+                        ui.label("^");
+                    } else {
+                        ui.label("X");
+                    }
+                } else if pickable {
+                    ui.label("?");
+                }
+            });
         }
     }
 }

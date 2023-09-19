@@ -94,9 +94,10 @@ impl Farkle {
     }
 
     fn draw_dice(&self, ui: &mut Ui) {
+        let pickable = self.roll.determine_pickable(None);
         ui.horizontal(|ui| {
-            for die in self.roll.dice() {
-                self.die_sprites.draw_die(die.value(), ui);
+            for (die, can_pick) in self.roll.dice().iter().zip(pickable) {
+                self.die_sprites.draw_die(die, can_pick, ui);
             }
         });
     }

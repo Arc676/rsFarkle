@@ -119,6 +119,10 @@ impl Die {
         self.picked
     }
 
+    pub fn picked_this_roll(&self) -> bool {
+        self.picked_this_roll
+    }
+
     pub fn value(&self) -> DieValue {
         self.value
     }
@@ -148,7 +152,7 @@ impl Roll {
         res
     }
 
-    fn determine_pickable(&self, occurrences: Option<&[usize; 6]>) -> [bool; 6] {
+    pub fn determine_pickable(&self, occurrences: Option<&[usize; 6]>) -> [bool; 6] {
         let mut res = [false; 6];
         let counts = match occurrences {
             Some(c) => *c,
