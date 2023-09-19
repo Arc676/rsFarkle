@@ -93,6 +93,14 @@ impl Farkle {
         ui.button(name).clicked() || ctx.input(|i| i.key_released(key))
     }
 
+    fn draw_dice(&self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            for die in self.roll.dice() {
+                self.die_sprites.draw_die(die.value(), ui);
+            }
+        });
+    }
+
     fn settings(&mut self, ui: &mut Ui) -> Option<AppAction> {
         ui.label("Number of turns");
         ui.add(egui::Slider::new(&mut self.turn_count, 1..=20usize));
@@ -127,6 +135,7 @@ impl Farkle {
                 die.set_value(idx + 1);
             }
         }
+        self.draw_dice(ui);
     }
 
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
@@ -147,11 +156,7 @@ impl Farkle {
             };
         }
 
-        ui.horizontal(|ui| {
-            for die in self.roll.dice() {
-                self.die_sprites.draw_die(die.value(), ui);
-            }
-        });
+        self.draw_dice(ui);
 
         let mut mov = None;
 
