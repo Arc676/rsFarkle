@@ -16,16 +16,16 @@ use std::fmt::Display;
 
 use rand::Rng;
 
-const STRAIGHT_VALUE: i32 = 3000;
-const TRIPLE_PAIR_VALUE: i32 = 2000;
+const STRAIGHT_VALUE: u32 = 3000;
+const TRIPLE_PAIR_VALUE: u32 = 2000;
 
-const ONE_VALUE: i32 = 100;
-const ONE_SET_VALUE: i32 = 1000;
+const ONE_VALUE: u32 = 100;
+const ONE_SET_VALUE: u32 = 1000;
 
-const FIVE_VALUE: i32 = 50;
-const FIVE_SET_VALUE: i32 = 500;
+const FIVE_VALUE: u32 = 50;
+const FIVE_SET_VALUE: u32 = 500;
 
-const SET_SCALE_VALUE: i32 = 100;
+const SET_SCALE_VALUE: u32 = 100;
 
 #[derive(Default, Debug, PartialEq)]
 pub enum GameState {
@@ -52,9 +52,11 @@ pub enum ToggleResult {
     NotUnpickable,
 }
 
+pub type DieValue = usize;
+
 #[derive(Debug, Default)]
 pub struct Die {
-    value: i32,
+    value: DieValue,
     picked: bool,
     picked_this_roll: bool,
 }
@@ -66,8 +68,8 @@ pub struct Roll {
 
 #[derive(Debug, Default)]
 pub struct Selection {
-    values: Vec<i32>,
-    value: i32,
+    values: Vec<DieValue>,
+    value: u32,
 }
 
 #[derive(Debug, PartialEq)]
@@ -87,7 +89,7 @@ type Hand = Vec<Selection>;
 #[derive(Debug)]
 pub struct Player {
     hand: Hand,
-    score: i32,
+    score: u32,
     name: String,
 }
 
@@ -117,8 +119,12 @@ impl Die {
         self.picked
     }
 
-    pub fn value(&self) -> i32 {
+    pub fn value(&self) -> DieValue {
         self.value
+    }
+
+    pub fn set_value(&mut self, value: DieValue) {
+        self.value = value;
     }
 }
 
@@ -256,7 +262,7 @@ impl Roll {
     }
 
     pub fn construct_selection(&self) -> Result<Selection, &str> {
-        let mut chosen = [0i32; 6];
+        let mut chosen = [0u32; 6];
         let mut sel = Selection::default();
 
         for die in &self.dice {
@@ -270,7 +276,7 @@ impl Roll {
                 continue;
             }
             if chosen[i] >= 3 {
-                sel.value += (i as i32 + 1) * SET_SCALE_VALUE * (chosen[i] - 2);
+                sel.value += (i as u32 + 1) * SET_SCALE_VALUE * (chosen[i] - 2);
             } else if chosen[i] > 0 {
                 return Err("Can only select 3 or more dice that aren't 1 or 5");
             }
@@ -297,14 +303,18 @@ impl Roll {
     pub fn dice(&self) -> &[Die] {
         &self.dice
     }
+
+    pub fn dice_mut(&mut self) -> &mut [Die] {
+        &mut self.dice
+    }
 }
 
 impl Selection {
-    pub fn values(&self) -> std::slice::Iter<'_, i32> {
+    pub fn values(&self) -> std::slice::Iter<'_, DieValue> {
         self.values.iter()
     }
 
-    pub fn value(&self) -> i32 {
+    pub fn value(&self) -> u32 {
         self.value
     }
 }
@@ -322,7 +332,7 @@ impl Player {
         &self.name
     }
 
-    pub fn score(&self) -> i32 {
+    pub fn score(&self) -> u32 {
         self.score
     }
 
@@ -342,7 +352,7 @@ impl Player {
         self.hand.pop()
     }
 
-    pub fn bank(&mut self) -> i32 {
+    pub fn bank(&mut self) -> u32 {
         let total = self.hand.iter().fold(0, |mut acc, sel| {
             acc += sel.value;
             acc
