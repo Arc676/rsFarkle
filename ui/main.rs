@@ -16,7 +16,7 @@
 
 pub mod dice;
 
-use dice::DieRenderer;
+use dice::{DieRenderer, RenderState};
 use eframe::egui::{Context, Ui};
 use eframe::{egui, Frame};
 
@@ -94,10 +94,22 @@ impl Farkle {
     }
 
     fn draw_dice(&self, ui: &mut Ui) {
-        let pickable = self.roll.determine_pickable(None);
+        let pickable = if self.game_in_progress {
+            self.roll.determine_pickable(None)
+        } else {
+            [false; 6]
+        };
         ui.horizontal(|ui| {
             for (die, can_pick) in self.roll.dice().iter().zip(pickable) {
-                self.die_sprites.draw_die(die, can_pick, ui);
+                self.die_sprites.draw_die(
+                    die,
+                    if self.game_in_progress {
+                        RenderState::InGame(can_pick)
+                    } else {
+                        RenderState::Splash
+                    },
+                    ui,
+                );
             }
         });
     }

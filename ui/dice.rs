@@ -21,6 +21,11 @@ pub struct DieRenderer {
     dice: [Option<(TextureHandle, Vec2)>; 6],
 }
 
+pub enum RenderState {
+    InGame(bool),
+    Splash,
+}
+
 macro_rules! get_die_sprites {
     ($dice:expr, $ui:expr, $( $idx:expr ),*) => {
         $(
@@ -60,19 +65,21 @@ impl DieRenderer {
         self.dice[0].is_none()
     }
 
-    pub fn draw_die(&self, die: &Die, pickable: bool, ui: &mut Ui) {
+    pub fn draw_die(&self, die: &Die, state: RenderState, ui: &mut Ui) {
         let idx = die.value() - 1;
         if let Some((texture, size)) = &self.dice[idx] {
             ui.vertical(|ui| {
                 ui.image(texture, *size);
-                if die.picked() {
-                    if die.picked_this_roll() {
-                        ui.label("^");
-                    } else {
-                        ui.label("X");
+                if let RenderState::InGame(pickable) = state {
+                    if die.picked() {
+                        if die.picked_this_roll() {
+                            ui.label("^");
+                        } else {
+                            ui.label("X");
+                        }
+                    } else if pickable {
+                        ui.label("?");
                     }
-                } else if pickable {
-                    ui.label("?");
                 }
             });
         }
