@@ -14,6 +14,7 @@
 
 use eframe::egui::{Ui, Vec2};
 use eframe::epaint::{ColorImage, TextureHandle};
+use rsfarkle::farkle::DieValue;
 
 #[derive(Default)]
 pub struct DieRenderer {
@@ -57,5 +58,12 @@ impl DieRenderer {
 
     pub fn needs_init(&self) -> bool {
         self.dice[0].is_none()
+    }
+
+    pub fn draw_die(&self, value: DieValue, ui: &mut Ui) {
+        assert!(value > 0 && value <= 6);
+        if let Some((texture, size)) = &self.dice[(value - 1) as usize] {
+            ui.image(texture, *size);
+        }
     }
 }

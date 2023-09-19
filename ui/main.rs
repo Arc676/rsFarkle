@@ -122,6 +122,10 @@ impl Farkle {
             self.die_sprites
                 .init(ui)
                 .expect("Failed to load die sprites");
+
+            for (idx, die) in self.roll.dice_mut().iter_mut().enumerate() {
+                die.set_value(idx + 1);
+            }
         }
     }
 
@@ -139,9 +143,15 @@ impl Farkle {
                 RollType::Farkle => ui.label("Farkle!"),
                 RollType::TriplePair => ui.label("Triple pair!"),
                 RollType::Straight => ui.label("Straight!"),
-                _ => ui.label("")
+                _ => ui.label(""),
             };
         }
+
+        ui.horizontal(|ui| {
+            for die in self.roll.dice() {
+                self.die_sprites.draw_die(die.value(), ui);
+            }
+        });
 
         let mut mov = None;
 
