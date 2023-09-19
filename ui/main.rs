@@ -14,6 +14,9 @@
 
 // Based on code in https://github.com/emilk/eframe_template
 
+pub mod dice;
+
+use dice::DieRenderer;
 use eframe::egui::{Context, Ui};
 use eframe::{egui, Frame};
 
@@ -44,6 +47,9 @@ struct Farkle {
     #[serde(skip)]
     game_in_progress: bool,
 
+    #[serde(skip)]
+    die_sprites: DieRenderer,
+
     player_names: Vec<String>,
     player_count: usize,
     turn_count: usize,
@@ -62,6 +68,7 @@ impl Default for Farkle {
             roll: Roll::default(),
             state: GameState::default(),
             roll_state: None,
+            die_sprites: DieRenderer::default(),
         }
     }
 }
@@ -108,9 +115,14 @@ impl Farkle {
         None
     }
 
-    fn splash(&self, ui: &mut Ui) {
+    fn splash(&mut self, ui: &mut Ui) {
         ui.heading("Farkle");
         ui.label("Set up game parameters and click 'New Game' to play.");
+        if self.die_sprites.needs_init() {
+            self.die_sprites
+                .init(ui)
+                .expect("Failed to load die sprites");
+        }
     }
 
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
