@@ -27,7 +27,7 @@ const FIVE_SET_VALUE: u32 = 500;
 
 const SET_SCALE_VALUE: u32 = 100;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone, Copy)]
 pub enum GameState {
     #[default]
     FirstRoll,

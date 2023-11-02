@@ -110,8 +110,7 @@ impl Farkle {
                         RenderState::Splash
                     },
                     ui,
-                )
-                {
+                ) {
                     clicked = Some(idx);
                 }
             }
@@ -180,16 +179,22 @@ impl Farkle {
 
         let mut mov = None;
 
-        type Mapping = (&'static str, egui::Key, MoveType);
+        type Mapping = (&'static str, egui::Key, MoveType, fn(GameState) -> bool);
         const MOVES: [Mapping; 3] = [
-            ("Roll", egui::Key::R, MoveType::Roll),
-            ("Confirm Selection", egui::Key::C, MoveType::Pick),
-            ("Bank", egui::Key::B, MoveType::Bank),
+            ("Roll", egui::Key::R, MoveType::Roll, |state| {
+                state != GameState::Picking
+            }),
+            ("Confirm Selection", egui::Key::C, MoveType::Pick, |state| {
+                state != GameState::Rolling && state != GameState::FirstRoll
+            }),
+            ("Bank", egui::Key::B, MoveType::Bank, |state| {
+                state == GameState::Rolling
+            }),
         ];
 
         ui.horizontal(|ui| {
-            for (name, key, mt) in MOVES {
-                if Self::get_input(name, key, ctx, ui) {
+            for (name, key, mt, state_check) in MOVES {
+                if state_check(self.state) && Self::get_input(name, key, ctx, ui) {
                     mov = Some(mt);
                 }
             }
