@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use eframe::egui::{Ui, Vec2};
+use eframe::egui::{self, Ui, Vec2};
 use eframe::epaint::{ColorImage, TextureHandle};
 use rsfarkle::farkle::Die;
 
@@ -67,9 +67,17 @@ impl DieRenderer {
 
     pub fn draw_die(&self, die: &Die, state: RenderState, ui: &mut Ui) {
         let idx = die.value() - 1;
-        if let Some((texture, size)) = &self.dice[idx] {
+        if let Some((texture, _)) = &self.dice[idx] {
             ui.vertical(|ui| {
-                ui.image(texture, *size);
+                if ui
+                    .add(egui::Button::opt_image_and_text(
+                        Some(egui::Image::from_texture(texture)),
+                        None,
+                    ))
+                    .clicked()
+                {
+                    // TODO
+                }
                 if let RenderState::InGame(pickable) = state {
                     if die.picked() {
                         if die.picked_this_roll() {

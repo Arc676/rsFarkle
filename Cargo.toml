@@ -9,7 +9,7 @@ default-run = "farkle-ui"
 [dependencies]
 structopt = "0.3.21"
 chrono = "0.4.26"
-eframe = "0.22.0" # Gives us egui, epi and web+native backends
+eframe = "0.23.0" # Gives us egui, epi and web+native backends
 serde = { version = "1", features = ["derive"], optional = true }
 rand = "0.8.5"
 termios = "0.3.3"
