@@ -39,6 +39,8 @@ struct Farkle {
     state: GameState,
     #[serde(skip)]
     roll_state: Option<RollType>,
+    #[serde(skip)]
+    bad_selection: Option<String>,
 
     #[serde(skip)]
     current_turn: usize,
@@ -69,6 +71,7 @@ impl Default for Farkle {
             state: GameState::default(),
             roll_state: None,
             die_sprites: DieRenderer::default(),
+            bad_selection: None,
         }
     }
 }
@@ -177,6 +180,14 @@ impl Farkle {
 
         self.draw_dice(ui);
 
+        if let Some(err) = self.bad_selection.as_ref() {
+            ui.label(err);
+            if !ui.button("OK").clicked() {
+                return;
+            }
+        }
+        self.bad_selection = None;
+
         let mut mov = None;
 
         type Mapping = (&'static str, egui::Key, MoveType, fn(GameState) -> bool);
@@ -222,7 +233,17 @@ impl Farkle {
                 self.get_current_player_mut().bank();
                 self.state = GameState::TurnEnded;
             }
-            _ => todo!(),
+            MoveType::Pick => match self.roll.construct_selection() {
+                Ok(selection) => {
+                    self.state = GameState::Rolling;
+                    self.get_current_player_mut().add_selection(selection);
+                }
+                Err(e) => {
+                    self.bad_selection = Some(format!("The selection is invalid: {}", e));
+                    self.roll.deselect();
+                }
+            },
+            _ => panic!("Unreachable state"),
         }
     }
 }
