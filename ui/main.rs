@@ -188,6 +188,27 @@ impl Farkle {
         }
         self.bad_selection = None;
 
+        if self.state == GameState::TurnEnded {
+            if ui.button("Proceed to next turn").clicked() {
+                self.state = GameState::FirstRoll;
+                self.roll = Default::default();
+                if self.current_player + 1 < self.player_count {
+                    self.current_player += 1;
+                } else {
+                    if self.current_turn < self.turn_count {
+                        self.current_player = 0;
+                        self.current_turn += 1;
+                    } else {
+                        ui.label("Game Over");
+                        if ui.button("OK").clicked() {
+                            self.game_in_progress = false;
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
         let mut mov = None;
 
         type Mapping = (&'static str, egui::Key, MoveType, fn(GameState) -> bool);
