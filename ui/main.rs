@@ -93,15 +93,16 @@ impl Farkle {
         ui.button(name).clicked() || ctx.input(|i| i.key_released(key))
     }
 
-    fn draw_dice(&self, ui: &mut Ui) {
+    fn draw_dice(&mut self, ui: &mut Ui) {
         let pickable = if self.game_in_progress {
             self.roll.determine_pickable(None)
         } else {
             [false; 6]
         };
         ui.horizontal(|ui| {
-            for (die, can_pick) in self.roll.dice().iter().zip(pickable) {
-                self.die_sprites.draw_die(
+            let mut clicked = None;
+            for (idx, (die, can_pick)) in self.roll.dice().iter().zip(pickable).enumerate() {
+                if self.die_sprites.draw_die(
                     die,
                     if self.game_in_progress {
                         RenderState::InGame(can_pick)
@@ -109,7 +110,13 @@ impl Farkle {
                         RenderState::Splash
                     },
                     ui,
-                );
+                )
+                {
+                    clicked = Some(idx);
+                }
+            }
+            if let Some(idx) = clicked {
+                self.roll.toggle_die(idx);
             }
         });
     }

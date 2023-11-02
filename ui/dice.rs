@@ -65,7 +65,8 @@ impl DieRenderer {
         self.dice[0].is_none()
     }
 
-    pub fn draw_die(&self, die: &Die, state: RenderState, ui: &mut Ui) {
+    pub fn draw_die(&self, die: &Die, state: RenderState, ui: &mut Ui) -> bool {
+        let mut clicked = false;
         let idx = die.value() - 1;
         if let Some((texture, _)) = &self.dice[idx] {
             ui.vertical(|ui| {
@@ -76,7 +77,7 @@ impl DieRenderer {
                     ))
                     .clicked()
                 {
-                    // TODO
+                    clicked = true;
                 }
                 if let RenderState::InGame(pickable) = state {
                     if die.picked() {
@@ -91,5 +92,6 @@ impl DieRenderer {
                 }
             });
         }
+        clicked
     }
 }
