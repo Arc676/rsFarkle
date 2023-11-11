@@ -108,7 +108,7 @@ impl Farkle {
                 if self.die_sprites.draw_die(
                     die,
                     if self.game_in_progress {
-                        RenderState::InGame(can_pick)
+                        RenderState::InGame(can_pick && self.state != GameState::FirstRoll)
                     } else {
                         RenderState::Splash
                     },
@@ -117,8 +117,10 @@ impl Farkle {
                     clicked = Some(idx);
                 }
             }
-            if let Some(idx) = clicked {
-                self.roll.toggle_die(idx);
+            if self.state != GameState::FirstRoll {
+                if let Some(idx) = clicked {
+                    self.roll.toggle_die(idx);
+                }
             }
         });
     }
@@ -191,6 +193,7 @@ impl Farkle {
         if self.state == GameState::TurnEnded {
             if ui.button("Proceed to next turn").clicked() {
                 self.state = GameState::FirstRoll;
+                self.roll_state = None;
                 self.roll = Default::default();
                 if self.current_player + 1 < self.player_count {
                     self.current_player += 1;
