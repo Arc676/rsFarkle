@@ -54,14 +54,14 @@ pub enum ToggleResult {
 
 pub type DieValue = usize;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Die {
     value: DieValue,
     picked: bool,
     picked_this_roll: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Roll {
     dice: [Die; 6],
 }
@@ -105,6 +105,14 @@ impl Display for RollType {
 }
 
 impl Die {
+    fn new_with_value(value: usize) -> Self {
+        Die {
+            value,
+            picked: false,
+            picked_this_roll: false,
+        }
+    }
+
     fn pick(&mut self) {
         self.picked = true;
         self.picked_this_roll = true;
@@ -310,6 +318,14 @@ impl Roll {
 
     pub fn dice_mut(&mut self) -> &mut [Die] {
         &mut self.dice
+    }
+}
+
+impl Default for Roll {
+    fn default() -> Self {
+        Roll {
+            dice: core::array::from_fn(|i| Die::new_with_value(i + 1)),
+        }
     }
 }
 
