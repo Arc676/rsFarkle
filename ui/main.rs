@@ -182,10 +182,15 @@ impl Farkle {
 
     fn show_leaderboard(&self, ui: &mut Ui) {
         ui.label("Leaderboard");
-        for player in &self.players {
+        let leaderboard = self
+            .players
+            .iter()
+            .map(|p| (p.name().to_string(), p.score()))
+            .sorted_by(|a, b| Ord::cmp(&a.1, &b.1).reverse());
+        for (name, score) in leaderboard {
             ui.horizontal(|ui| {
-                ui.label(player.name());
-                ui.label(player.score().to_string());
+                ui.label(name);
+                ui.label(score.to_string());
             });
         }
     }
