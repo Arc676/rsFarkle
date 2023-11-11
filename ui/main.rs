@@ -17,8 +17,11 @@
 pub mod dice;
 
 use dice::{DieRenderer, RenderState};
+
 use eframe::egui::{Context, Ui};
 use eframe::{egui, Frame};
+
+use itertools::Itertools;
 
 use rsfarkle::farkle::*;
 
@@ -162,6 +165,31 @@ impl Farkle {
         self.draw_dice(ui);
     }
 
+    fn show_selections(&self, ui: &mut Ui) {
+        ui.label("Selections");
+        let selections = self.players[self.current_player].selections();
+        if selections.len() == 0 {
+            ui.label("(None so far)");
+        } else {
+            for sel in selections {
+                ui.horizontal(|ui| {
+                    ui.label(sel.values().join(" "));
+                    ui.label(sel.value().to_string());
+                });
+            }
+        }
+    }
+
+    fn show_leaderboard(&self, ui: &mut Ui) {
+        ui.label("Leaderboard");
+        for player in &self.players {
+            ui.horizontal(|ui| {
+                ui.label(player.name());
+                ui.label(player.score().to_string());
+            });
+        }
+    }
+
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
         ui.label(format!(
             "{}'s turn {} of {}. Score: {}",
@@ -209,66 +237,69 @@ impl Farkle {
                     }
                 }
             }
-            return;
-        }
+        } else {
+            let mut mov = None;
 
-        let mut mov = None;
+            type Mapping = (&'static str, egui::Key, MoveType, fn(GameState) -> bool);
+            const MOVES: [Mapping; 3] = [
+                ("Roll", egui::Key::R, MoveType::Roll, |state| {
+                    state != GameState::Picking
+                }),
+                ("Confirm Selection", egui::Key::C, MoveType::Pick, |state| {
+                    state != GameState::Rolling && state != GameState::FirstRoll
+                }),
+                ("Bank", egui::Key::B, MoveType::Bank, |state| {
+                    state == GameState::Rolling
+                }),
+            ];
 
-        type Mapping = (&'static str, egui::Key, MoveType, fn(GameState) -> bool);
-        const MOVES: [Mapping; 3] = [
-            ("Roll", egui::Key::R, MoveType::Roll, |state| {
-                state != GameState::Picking
-            }),
-            ("Confirm Selection", egui::Key::C, MoveType::Pick, |state| {
-                state != GameState::Rolling && state != GameState::FirstRoll
-            }),
-            ("Bank", egui::Key::B, MoveType::Bank, |state| {
-                state == GameState::Rolling
-            }),
-        ];
-
-        ui.horizontal(|ui| {
-            for (name, key, mt, state_check) in MOVES {
-                if state_check(self.state) && Self::get_input(name, key, ctx, ui) {
-                    mov = Some(mt);
+            ui.horizontal(|ui| {
+                for (name, key, mt, state_check) in MOVES {
+                    if state_check(self.state) && Self::get_input(name, key, ctx, ui) {
+                        mov = Some(mt);
+                    }
                 }
-            }
-        });
+            });
 
-        let Some(mov) = mov else { return };
-        match mov {
-            MoveType::Roll => {
-                self.roll.new_roll();
-                let (selection, roll_type) = self.roll.determine_type();
-                match roll_type {
-                    RollType::Farkle => {
-                        self.get_current_player_mut().empty_hand();
+            if let Some(mov) = mov {
+                match mov {
+                    MoveType::Roll => {
+                        self.roll.new_roll();
+                        let (selection, roll_type) = self.roll.determine_type();
+                        match roll_type {
+                            RollType::Farkle => {
+                                self.get_current_player_mut().empty_hand();
+                                self.state = GameState::TurnEnded;
+                                self.roll_state = Some(roll_type);
+                            }
+                            RollType::Straight | RollType::TriplePair => {
+                                self.get_current_player_mut().add_selection(selection);
+                                self.roll_state = Some(roll_type);
+                            }
+                            _ => self.state = GameState::Picking,
+                        }
+                    }
+                    MoveType::Bank => {
+                        self.get_current_player_mut().bank();
                         self.state = GameState::TurnEnded;
-                        self.roll_state = Some(roll_type);
                     }
-                    RollType::Straight | RollType::TriplePair => {
-                        self.get_current_player_mut().add_selection(selection);
-                        self.roll_state = Some(roll_type);
-                    }
-                    _ => self.state = GameState::Picking,
+                    MoveType::Pick => match self.roll.construct_selection() {
+                        Ok(selection) => {
+                            self.state = GameState::Rolling;
+                            self.get_current_player_mut().add_selection(selection);
+                        }
+                        Err(e) => {
+                            self.bad_selection = Some(format!("The selection is invalid: {}", e));
+                            self.roll.deselect();
+                        }
+                    },
+                    _ => panic!("Unreachable state"),
                 }
             }
-            MoveType::Bank => {
-                self.get_current_player_mut().bank();
-                self.state = GameState::TurnEnded;
-            }
-            MoveType::Pick => match self.roll.construct_selection() {
-                Ok(selection) => {
-                    self.state = GameState::Rolling;
-                    self.get_current_player_mut().add_selection(selection);
-                }
-                Err(e) => {
-                    self.bad_selection = Some(format!("The selection is invalid: {}", e));
-                    self.roll.deselect();
-                }
-            },
-            _ => panic!("Unreachable state"),
         }
+
+        self.show_selections(ui);
+        self.show_leaderboard(ui);
     }
 }
 
