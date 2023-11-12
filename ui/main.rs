@@ -171,12 +171,16 @@ impl Farkle {
         if selections.len() == 0 {
             ui.label("(None so far)");
         } else {
-            for sel in selections {
-                ui.horizontal(|ui| {
-                    ui.label(sel.values().join(" "));
-                    ui.label(sel.value().to_string());
+            let width = ui.available_width() / 2.;
+            egui::Grid::new("selections_table")
+                .min_col_width(width)
+                .show(ui, |ui| {
+                    for sel in selections {
+                        ui.label(sel.values().join(" "));
+                        ui.label(sel.value().to_string());
+                        ui.end_row();
+                    }
                 });
-            }
         }
     }
 
@@ -187,12 +191,16 @@ impl Farkle {
             .iter()
             .map(|p| (p.name().to_string(), p.score()))
             .sorted_by(|a, b| Ord::cmp(&a.1, &b.1).reverse());
-        for (name, score) in leaderboard {
-            ui.horizontal(|ui| {
-                ui.label(name);
-                ui.label(score.to_string());
+        let width = ui.available_width() / 2.;
+        egui::Grid::new("leaderboard")
+            .min_col_width(width)
+            .show(ui, |ui| {
+                for (name, score) in leaderboard {
+                    ui.label(name);
+                    ui.label(score.to_string());
+                    ui.end_row();
+                }
             });
-        }
     }
 
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
