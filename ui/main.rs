@@ -203,6 +203,10 @@ impl Farkle {
             });
     }
 
+    fn game_will_end(&self) -> bool {
+        self.current_player + 1 == self.player_count && self.current_turn == self.turn_count
+    }
+
     fn game_view(&mut self, ctx: &Context, ui: &mut Ui) {
         ui.label(format!(
             "{}'s turn {} of {}. Score: {}",
@@ -232,21 +236,25 @@ impl Farkle {
         self.bad_selection = None;
 
         if self.state == GameState::TurnEnded {
-            if ui.button("Proceed to next turn").clicked() {
-                self.state = GameState::FirstRoll;
-                self.roll_state = None;
-                self.roll = Default::default();
-                if self.current_player + 1 < self.player_count {
-                    self.current_player += 1;
-                } else {
-                    if self.current_turn < self.turn_count {
+            if self.game_will_end() {
+                ui.label("Game Over");
+                if ui.button("OK").clicked() {
+                    self.game_in_progress = false;
+
+                    self.state = GameState::FirstRoll;
+                    self.roll_state = None;
+                    self.roll = Default::default();
+                }
+            } else {
+                if ui.button("Proceed to next turn").clicked() {
+                    self.state = GameState::FirstRoll;
+                    self.roll_state = None;
+                    self.roll = Default::default();
+                    if self.current_player + 1 < self.player_count {
+                        self.current_player += 1;
+                    } else {
                         self.current_player = 0;
                         self.current_turn += 1;
-                    } else {
-                        ui.label("Game Over");
-                        if ui.button("OK").clicked() {
-                            self.game_in_progress = false;
-                        }
                     }
                 }
             }
