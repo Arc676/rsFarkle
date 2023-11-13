@@ -106,6 +106,7 @@ impl Farkle {
             [false; 6]
         };
         ui.horizontal(|ui| {
+            ui.visuals_mut().button_frame = false;
             let mut clicked = None;
             for (idx, (die, can_pick)) in self.roll.dice().iter().zip(pickable).enumerate() {
                 if self.die_sprites.draw_die(
@@ -166,7 +167,7 @@ impl Farkle {
     }
 
     fn show_selections(&self, ui: &mut Ui) {
-        ui.label("Selections");
+        ui.heading("Selections");
         let selections = self.players[self.current_player].selections();
         if selections.len() == 0 {
             ui.label("(None so far)");
@@ -185,7 +186,7 @@ impl Farkle {
     }
 
     fn show_leaderboard(&self, ui: &mut Ui) {
-        ui.label("Leaderboard");
+        ui.heading("Leaderboard");
         let leaderboard = self
             .players
             .iter()
@@ -238,7 +239,7 @@ impl Farkle {
         if self.state == GameState::TurnEnded {
             if self.game_will_end() {
                 ui.label("Game Over");
-                if ui.button("OK").clicked() {
+                if Self::get_input("OK", egui::Key::Enter, ctx, ui) {
                     self.game_in_progress = false;
 
                     self.state = GameState::FirstRoll;
@@ -246,7 +247,7 @@ impl Farkle {
                     self.roll = Default::default();
                 }
             } else {
-                if ui.button("Proceed to next turn").clicked() {
+                if Self::get_input("Proceed to next turn", egui::Key::Enter, ctx, ui) {
                     self.state = GameState::FirstRoll;
                     self.roll_state = None;
                     self.roll = Default::default();
