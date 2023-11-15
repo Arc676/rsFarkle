@@ -247,6 +247,9 @@ impl Farkle {
                     self.roll = Default::default();
                 }
             } else if Self::get_input("Proceed to next turn", egui::Key::Enter, ctx, ui) {
+                if self.roll_state == Some(RollType::Farkle) {
+                    self.get_current_player_mut().empty_hand();
+                }
                 self.state = GameState::FirstRoll;
                 self.roll_state = None;
                 self.roll = Default::default();
@@ -288,7 +291,6 @@ impl Farkle {
                         let (selection, roll_type) = self.roll.determine_type();
                         match roll_type {
                             RollType::Farkle => {
-                                self.get_current_player_mut().empty_hand();
                                 self.state = GameState::TurnEnded;
                                 self.roll_state = Some(roll_type);
                             }
