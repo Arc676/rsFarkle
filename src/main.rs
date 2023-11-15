@@ -338,7 +338,7 @@ fn main() -> io::Result<()> {
 
     let stdin = 0;
     let old = Termios::from_fd(stdin).unwrap();
-    let mut new = old.clone();
+    let mut new = old;
 
     if cfg!(feature = "onekey") {
         new.c_lflag &= !ICANON;

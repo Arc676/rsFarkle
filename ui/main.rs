@@ -137,7 +137,7 @@ impl Farkle {
         ui.add(egui::Slider::new(&mut self.player_count, 1..=10usize));
         if self.player_count > self.player_names.len() {
             self.player_names
-                .resize_with(self.player_count, || String::new());
+                .resize_with(self.player_count, String::new);
         }
         for name in self.player_names.iter_mut().take(self.player_count) {
             ui.text_edit_singleline(name);
@@ -246,17 +246,15 @@ impl Farkle {
                     self.roll_state = None;
                     self.roll = Default::default();
                 }
-            } else {
-                if Self::get_input("Proceed to next turn", egui::Key::Enter, ctx, ui) {
-                    self.state = GameState::FirstRoll;
-                    self.roll_state = None;
-                    self.roll = Default::default();
-                    if self.current_player + 1 < self.player_count {
-                        self.current_player += 1;
-                    } else {
-                        self.current_player = 0;
-                        self.current_turn += 1;
-                    }
+            } else if Self::get_input("Proceed to next turn", egui::Key::Enter, ctx, ui) {
+                self.state = GameState::FirstRoll;
+                self.roll_state = None;
+                self.roll = Default::default();
+                if self.current_player + 1 < self.player_count {
+                    self.current_player += 1;
+                } else {
+                    self.current_player = 0;
+                    self.current_turn += 1;
                 }
             }
         } else {

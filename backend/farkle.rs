@@ -154,7 +154,7 @@ impl Roll {
         let mut res = [0; 6];
         for die in &self.dice {
             if !die.picked || die.picked_this_roll {
-                res[die.value as usize - 1] += 1;
+                res[die.value - 1] += 1;
             }
         }
         res
@@ -172,7 +172,7 @@ impl Roll {
             } else {
                 3
             };
-            let count = counts[die.value as usize - 1];
+            let count = counts[die.value - 1];
             res[i] = !die.picked && count >= required;
         }
         res
@@ -222,12 +222,10 @@ impl Roll {
             } else {
                 ToggleResult::NotUnpickable
             }
+        } else if self.pick_die(die) {
+            ToggleResult::Picked
         } else {
-            if self.pick_die(die) {
-                ToggleResult::Picked
-            } else {
-                ToggleResult::NotPickable
-            }
+            ToggleResult::NotPickable
         }
     }
 
@@ -280,16 +278,16 @@ impl Roll {
         for die in &self.dice {
             if die.picked_this_roll {
                 sel.values.push(die.value);
-                chosen[die.value as usize - 1] += 1;
+                chosen[die.value - 1] += 1;
             }
         }
-        for i in 1..6 {
-            if i == 4 {
+        for (idx, count) in chosen.iter().enumerate().skip(1) {
+            if idx == 4 {
                 continue;
             }
-            if chosen[i] >= 3 {
-                sel.value += (i as u32 + 1) * SET_SCALE_VALUE * (chosen[i] - 2);
-            } else if chosen[i] > 0 {
+            if *count >= 3 {
+                sel.value += (idx as u32 + 1) * SET_SCALE_VALUE * (count - 2);
+            } else if *count > 0 {
                 return Err("Can only select 3 or more dice that aren't 1 or 5");
             }
         }
