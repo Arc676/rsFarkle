@@ -175,12 +175,19 @@ impl Farkle {
             let width = ui.available_width() / 2.;
             egui::Grid::new("selections_table")
                 .min_col_width(width)
+                .striped(true)
                 .show(ui, |ui| {
+                    let mut total = 0;
                     for sel in selections {
                         ui.label(sel.values().join(" "));
                         ui.label(sel.value().to_string());
                         ui.end_row();
+
+                        total += sel.value();
                     }
+                    ui.label("Total");
+                    ui.label(total.to_string());
+                    ui.end_row();
                 });
         }
     }
